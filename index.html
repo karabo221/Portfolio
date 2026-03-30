@@ -1,1047 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Karabo Ramanamane — Software Developer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-<style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-:root {
-  --black:   #080809;
-  --white:   #f0ede8;
-  --cream:   #e8e3da;
-  --lime:    #c8ff00;
-  --rust:    #e85d26;
-  --fog:     #2a2a2e;
-  --mid:     #4a4a52;
-  --faint:   #1a1a1e;
-  --ff-head: 'Bebas Neue', sans-serif;
-  --ff-serif:'Instrument Serif', serif;
-  --ff-mono: 'Geist Mono', monospace;
-}
-
-html { scroll-behavior:smooth; font-size:16px; }
-
-body {
-  background: var(--black);
-  color: var(--white);
-  font-family: var(--ff-mono);
-  font-size: 0.8125rem;
-  line-height: 1.7;
-  overflow-x: hidden;
-  cursor: none;
-}
-
-::selection { background: var(--lime); color: var(--black); }
-
-/* CURSOR */
-#cursor-outer {
-  position: fixed;
-  width: 36px; height: 36px;
-  border: 1px solid rgba(200,255,0,.6);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%,-50%);
-  transition: width .3s, height .3s, border-color .3s, background .3s;
-  mix-blend-mode: difference;
-}
-#cursor-dot {
-  position: fixed;
-  width: 5px; height: 5px;
-  background: var(--lime);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%,-50%);
-}
-body.hovering #cursor-outer {
-  width: 64px; height: 64px;
-  border-color: var(--lime);
-  background: rgba(200,255,0,.08);
-}
-
-/* CANVAS BG */
-#bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  opacity: .4;
-}
-
-/* GRAIN OVERLAY */
-.grain {
-  position: fixed;
-  inset: -200%;
-  width: 400%; height: 400%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  opacity: .03;
-  pointer-events: none;
-  z-index: 1;
-  animation: grain 8s steps(10) infinite;
-}
-@keyframes grain {
-  0%,100%{transform:translate(0,0)}10%{transform:translate(-5%,-10%)}20%{transform:translate(-15%,5%)}30%{transform:translate(7%,-25%)}40%{transform:translate(-5%,25%)}50%{transform:translate(-15%,10%)}60%{transform:translate(15%,0)}70%{transform:translate(0,15%)}80%{transform:translate(3%,35%)}90%{transform:translate(-10%,10%)}
-}
-
-.wrap { position: relative; z-index: 2; }
-
-/* NAV */
-nav {
-  position: fixed; top:0; left:0; right:0;
-  z-index: 200;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.4rem 4rem;
-}
-nav::after {
-  content:'';
-  position:absolute; bottom:0; left:4rem; right:4rem;
-  height:1px;
-  background: linear-gradient(90deg, transparent, var(--fog) 20%, var(--fog) 80%, transparent);
-}
-.nav-logo {
-  font-family: var(--ff-head);
-  font-size: 1.5rem;
-  letter-spacing: .1em;
-  color: var(--lime);
-  text-decoration:none;
-}
-.nav-right { display:flex; align-items:center; gap:3rem; }
-.nav-links { display:flex; gap:2.5rem; list-style:none; }
-.nav-links a {
-  color: var(--mid);
-  text-decoration:none;
-  font-size:.65rem;
-  letter-spacing:.2em;
-  text-transform:uppercase;
-  position:relative;
-  transition:color .25s;
-}
-.nav-links a::after {
-  content:'';
-  position:absolute; left:0; bottom:-2px;
-  width:0; height:1px;
-  background:var(--lime);
-  transition:width .3s;
-}
-.nav-links a:hover { color:var(--white); }
-.nav-links a:hover::after { width:100%; }
-.nav-status {
-  display:flex; align-items:center; gap:.5rem;
-  font-size:.6rem; letter-spacing:.15em; text-transform:uppercase;
-  color:var(--mid);
-}
-.status-dot {
-  width:6px; height:6px;
-  background:var(--lime);
-  border-radius:50%;
-  animation:pulse 2s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
-
-/* HERO */
-#hero {
-  min-height: 100vh;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  padding: 0 4rem;
-  position:relative;
-  overflow:hidden;
-  border:none !important;
-}
-.hero-main {
-  display:grid;
-  grid-template-columns: 1fr 400px;
-  gap: 4rem;
-  align-items: flex-end;
-  padding-top: 28vh;
-  padding-bottom: 5rem;
-}
-.hero-eyebrow {
-  display:flex; align-items:center; gap:1rem;
-  margin-bottom:1.5rem;
-  opacity:0; animation: fadeUp .7s .2s forwards;
-}
-.eyebrow-line { width:40px; height:1px; background:var(--lime); }
-.eyebrow-text { font-size:.6rem; letter-spacing:.25em; text-transform:uppercase; color:var(--lime); }
-.hero-name {
-  font-family: var(--ff-head);
-  font-size: clamp(5rem, 10vw, 10rem);
-  line-height: .92;
-  letter-spacing: -.01em;
-  color: var(--white);
-  opacity:0; animation: fadeUp .8s .3s forwards;
-}
-.hero-name .stroke {
-  display:block;
-  font-family:var(--ff-serif);
-  font-style:italic;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--white);
-  font-size: clamp(4.2rem, 9vw, 9rem);
-}
-.hero-role-line {
-  display:flex; align-items:center; gap:1.5rem;
-  margin-top:2rem;
-  opacity:0; animation:fadeUp .7s .5s forwards;
-}
-.hero-role { font-family:var(--ff-serif); font-style:italic; font-size:1.1rem; color:var(--mid); }
-.role-sep { width:1px; height:28px; background:var(--fog); }
-.hero-loc { font-size:.65rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mid); }
-
-.hero-right {
-  display:flex; flex-direction:column; justify-content:flex-end; gap:2rem;
-  opacity:0; animation:fadeIn .9s .5s forwards;
-}
-
-/* PHOTO */
-.photo-container { position:relative; width:100%; aspect-ratio:3/4; }
-.photo-frame-border {
-  position:absolute; inset:-1px;
-  background:linear-gradient(135deg,var(--lime) 0%,transparent 60%);
-  z-index:0;
-}
-.photo-inner {
-  position:relative; z-index:1;
-  width:calc(100% - 0px); height:calc(100% - 0px);
-  overflow:hidden;
-  background:var(--faint);
-  border:1px solid var(--fog);
-  margin:0;
-}
-.photo-inner img {
-  width:100%; height:100%; object-fit:cover; display:block;
-  filter:grayscale(30%) contrast(1.05);
-  transition:filter .5s;
-}
-.photo-inner:hover img { filter:grayscale(0%) contrast(1.1); }
-.photo-placeholder {
-  width:100%; height:100%;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:1.2rem; padding:2rem;
-  background: repeating-linear-gradient(45deg, var(--faint), var(--faint) 10px, #111113 10px, #111113 20px);
-}
-.ph-icon { font-size:2rem; opacity:.3; }
-.ph-label { font-size:.65rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mid); text-align:center; }
-.ph-code {
-  font-size:.58rem; color:var(--lime); opacity:.6;
-  background:rgba(200,255,0,.04);
-  padding:.5rem 1rem;
-  border:1px solid rgba(200,255,0,.12);
-  text-align:center; line-height:1.9;
-}
-.photo-badge {
-  position:absolute; bottom:-12px; left:-12px;
-  background:var(--lime); color:var(--black);
-  font-size:.58rem; letter-spacing:.15em; text-transform:uppercase;
-  padding:.5rem 1rem; z-index:2; font-weight:500;
-}
-
-.hero-bio { font-size:.8rem; color:var(--mid); line-height:1.9; }
-.hero-bio strong { color:var(--white); font-weight:400; }
-
-.hero-bottom {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:1.5rem 0;
-  border-top:1px solid var(--fog);
-  opacity:0; animation:fadeUp .6s .8s forwards;
-}
-.scroll-hint {
-  display:flex; align-items:center; gap:.8rem;
-  font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid);
-}
-.scroll-arrow {
-  width:28px; height:28px;
-  border:1px solid var(--fog); border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:.75rem;
-  animation:bob 2s ease-in-out infinite;
-}
-@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
-.hero-cta { display:flex; gap:1rem; align-items:center; }
-
-/* BUTTONS */
-.btn-mag {
-  position:relative; display:inline-flex; align-items:center;
-  gap:.8rem; overflow:hidden;
-  padding:.85rem 2.2rem;
-  font-family:var(--ff-mono); font-size:.7rem;
-  letter-spacing:.15em; text-transform:uppercase;
-  text-decoration:none; cursor:none;
-  transition:transform .3s ease;
-}
-.btn-bg {
-  position:absolute; inset:0;
-  transition:transform .4s cubic-bezier(.23,1,.32,1);
-}
-.btn-text { position:relative; z-index:1; }
-.btn-primary .btn-bg { background:var(--lime); }
-.btn-primary { color:var(--black); }
-.btn-ghost { border:1px solid var(--fog); color:var(--mid); }
-.btn-ghost .btn-bg { background:var(--white); transform:scaleY(0); transform-origin:bottom; }
-.btn-ghost:hover { color:var(--black); border-color:var(--white); }
-.btn-ghost:hover .btn-bg { transform:scaleY(1); }
-
-/* SECTION BASE */
-section {
-  position:relative; z-index:2;
-  padding: 8rem 4rem;
-  border-top:1px solid var(--fog);
-}
-.s-label {
-  display:inline-flex; align-items:center; gap:.8rem;
-  font-size:.6rem; letter-spacing:.25em; text-transform:uppercase;
-  color:var(--lime); margin-bottom:4rem;
-}
-.s-num {
-  display:inline-flex; align-items:center; justify-content:center;
-  width:22px; height:22px;
-  border:1px solid rgba(200,255,0,.3);
-  font-size:.55rem; color:var(--lime);
-}
-
-/* REVEAL */
-.reveal { opacity:0; transform:translateY(40px); transition: opacity .7s, transform .7s cubic-bezier(.23,1,.32,1); }
-.reveal.visible { opacity:1; transform:translateY(0); }
-.d1 { transition-delay:.1s; }
-.d2 { transition-delay:.2s; }
-.d3 { transition-delay:.3s; }
-.d4 { transition-delay:.4s; }
-
-/* ABOUT */
-#about .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:8rem; align-items:start; }
-.about-big {
-  font-family:var(--ff-serif); font-style:italic;
-  font-size:clamp(1.4rem,2.2vw,1.9rem); color:var(--white);
-  line-height:1.5; margin-bottom:2.5rem;
-}
-.about-para { color:var(--mid); line-height:1.95; margin-bottom:1.2rem; font-size:.82rem; }
-.about-para strong { color:var(--white); font-weight:400; }
-.facts-table { border-top:1px solid var(--fog); }
-.fact-row {
-  display:flex; gap:2rem; padding:1.2rem 0;
-  border-bottom:1px solid var(--fog); align-items:center;
-  transition:background .2s, padding-left .2s;
-}
-.fact-row:hover { background:rgba(255,255,255,.02); padding-left:.5rem; }
-.fact-key { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid); min-width:90px; }
-.fact-val { color:var(--white); font-size:.82rem; }
-.fact-val.green { color:var(--lime); }
-.langs-wrap { margin-top:3rem; }
-.langs-label { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin-bottom:1rem; }
-.langs-list { display:flex; flex-wrap:wrap; gap:.6rem; }
-.lang-tag {
-  padding:.4rem 1rem; border:1px solid var(--fog);
-  font-size:.65rem; letter-spacing:.1em; color:var(--white); text-transform:uppercase;
-  transition:border-color .2s, color .2s;
-}
-.lang-tag:hover { border-color:var(--lime); color:var(--lime); }
-
-/* SKILLS */
-#skills { padding:6rem 0; overflow:hidden; }
-.skills-marquee-wrap {
-  position:relative; overflow:hidden;
-  border-top:1px solid var(--fog); border-bottom:1px solid var(--fog);
-  padding:1.8rem 0; margin-bottom:6rem;
-}
-.skills-marquee-wrap::before,
-.skills-marquee-wrap::after {
-  content:''; position:absolute; top:0; bottom:0; width:8rem; z-index:1;
-}
-.skills-marquee-wrap::before { left:0; background:linear-gradient(90deg,var(--black),transparent); }
-.skills-marquee-wrap::after  { right:0; background:linear-gradient(-90deg,var(--black),transparent); }
-.marquee-track {
-  display:flex; gap:2.5rem;
-  width:max-content;
-  animation:marquee 28s linear infinite;
-}
-.marquee-track:hover { animation-play-state:paused; }
-@keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-.marquee-pill {
-  display:flex; align-items:center; gap:.7rem;
-  padding:.4rem 1.4rem;
-  border:1px solid var(--fog);
-  font-size:.68rem; letter-spacing:.15em; text-transform:uppercase;
-  color:var(--mid); white-space:nowrap;
-  transition:border-color .2s, color .2s;
-}
-.marquee-pill:hover { border-color:var(--lime); color:var(--lime); }
-.m-dot { width:4px; height:4px; border-radius:50%; background:currentColor; flex-shrink:0; }
-
-.skills-inner { padding:0 4rem; }
-.skill-cats { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--fog); border:1px solid var(--fog); }
-.skill-cat {
-  background:var(--black); padding:2.5rem 2rem;
-  transition:background .3s;
-}
-.skill-cat:hover { background:var(--faint); }
-.sc-head {
-  font-size:.55rem; letter-spacing:.25em; text-transform:uppercase;
-  color:var(--lime); margin-bottom:1.5rem;
-  display:flex; align-items:center; gap:.6rem;
-}
-.sc-head::after { content:''; flex:1; height:1px; background:rgba(200,255,0,.2); }
-.sc-items { display:flex; flex-direction:column; gap:.9rem; }
-.sc-item { display:flex; align-items:center; gap:.8rem; font-size:.78rem; color:var(--white); }
-.sc-bar {
-  flex:1; height:1px; background:var(--fog);
-  position:relative; overflow:hidden;
-}
-.sc-fill {
-  position:absolute; left:0; top:0; bottom:0;
-  background:var(--lime);
-  transform:scaleX(0); transform-origin:left;
-  transition:transform 1s cubic-bezier(.23,1,.32,1);
-}
-.skill-cat.visible .sc-fill { transform:scaleX(1); }
-
-/* EXPERIENCE */
-.exp-timeline { position:relative; padding-left:2rem; }
-.exp-timeline::before {
-  content:''; position:absolute; left:0; top:0; bottom:0;
-  width:1px;
-  background:linear-gradient(to bottom,var(--lime) 0%,rgba(200,255,0,.1) 80%, transparent 100%);
-}
-.exp-entry {
-  display:grid; grid-template-columns:180px 1fr; gap:4rem;
-  padding:3.5rem 0; position:relative;
-}
-.exp-entry + .exp-entry { border-top:1px solid var(--fog); }
-.exp-entry::before {
-  content:''; position:absolute; left:-2rem; top:3.6rem;
-  width:9px; height:9px;
-  border:1px solid var(--lime); border-radius:50%;
-  background:var(--black);
-  transform:translateX(calc(-50% + .5px));
-  transition:background .3s;
-}
-.exp-entry:first-child::before { background:var(--lime); }
-.exp-entry:hover::before { background:var(--lime); }
-.exp-year { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--lime); margin-bottom:.4rem; }
-.exp-org { font-size:.7rem; color:var(--mid); }
-.exp-title {
-  font-family:var(--ff-head);
-  font-size:clamp(1.8rem,3vw,2.8rem); line-height:1;
-  letter-spacing:.02em; margin-bottom:1rem;
-}
-.exp-desc { color:var(--mid); font-size:.82rem; line-height:1.9; margin-bottom:1.5rem; max-width:560px; }
-.exp-list { list-style:none; display:flex; flex-direction:column; gap:.6rem; }
-.exp-list li { font-size:.8rem; color:var(--mid); display:flex; gap:1rem; align-items:flex-start; }
-.exp-list li::before { content:'↳'; color:var(--lime); flex-shrink:0; }
-.exp-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.5rem; }
-.exp-tag {
-  font-size:.6rem; letter-spacing:.1em; text-transform:uppercase;
-  padding:.3rem .8rem;
-  background:rgba(255,255,255,.03); border:1px solid var(--fog); color:var(--mid);
-}
-
-/* EDUCATION */
-.edu-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--fog); border:1px solid var(--fog); }
-.edu-card {
-  background:var(--black); padding:3rem;
-  position:relative; overflow:hidden; transition:background .3s;
-}
-.edu-card:hover { background:var(--faint); }
-.edu-card::before {
-  content:''; position:absolute; top:0; left:0; width:100%; height:3px;
-}
-.edu-card:nth-child(1)::before { background:var(--lime); }
-.edu-card:nth-child(2)::before { background:var(--rust); }
-.edu-icon { font-size:2rem; margin-bottom:1.5rem; display:block; }
-.edu-deg { font-family:var(--ff-head); font-size:clamp(1.5rem,2.5vw,2.1rem); letter-spacing:.02em; line-height:1.1; margin-bottom:.5rem; }
-.edu-school { color:var(--mid); font-size:.8rem; margin-bottom:1.5rem; }
-.edu-badge {
-  display:inline-block; padding:.35rem .9rem;
-  font-size:.6rem; letter-spacing:.2em; text-transform:uppercase;
-  border:1px solid var(--fog); color:var(--mid);
-}
-.edu-card:nth-child(1) .edu-badge { border-color:rgba(200,255,0,.3); color:var(--lime); }
-
-/* CERTIFICATIONS */
-.cert-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-.cert-card {
-  padding:2.5rem; border:1px solid var(--fog);
-  position:relative; overflow:hidden;
-  display:flex; gap:2rem; align-items:flex-start;
-  transition:border-color .3s, background .3s;
-}
-.cert-card:hover { border-color:var(--lime); background:rgba(200,255,0,.02); }
-.cert-card:hover .cert-arrow { opacity:1; transform:translate(0,0); }
-.cert-num { font-family:var(--ff-head); font-size:3rem; line-height:1; color:rgba(255,255,255,.05); flex-shrink:0; margin-top:-.5rem; }
-.cert-issuer { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--lime); margin-bottom:.5rem; }
-.cert-name { font-size:.88rem; color:var(--white); line-height:1.5; }
-.cert-arrow {
-  position:absolute; bottom:1.5rem; right:1.5rem;
-  color:var(--lime); font-size:1rem;
-  opacity:0; transform:translate(-4px,4px);
-  transition:opacity .2s, transform .2s;
-}
-
-/* CONTACT */
-#contact { padding-bottom:10rem; }
-.contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:8rem; align-items:start; }
-.contact-big {
-  font-family:var(--ff-head);
-  font-size:clamp(3.5rem,7vw,7rem); line-height:.88; letter-spacing:.01em; margin-bottom:2.5rem;
-}
-.contact-big .stroke-line {
-  display:block; font-family:var(--ff-serif); font-style:italic;
-  color:transparent; -webkit-text-stroke:1px var(--mid);
-}
-.contact-tagline { color:var(--mid); font-size:.82rem; max-width:360px; line-height:1.9; margin-bottom:3rem; }
-.contact-channels { display:flex; flex-direction:column; border-top:1px solid var(--fog); }
-.ch-row {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:1.4rem 0; border-bottom:1px solid var(--fog);
-  text-decoration:none; transition:padding-left .2s;
-}
-.ch-row:hover { padding-left:.5rem; }
-.ch-row:hover .ch-label { color:var(--lime); }
-.ch-row:hover .ch-arr { transform:translateX(4px); }
-.ch-type { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin-bottom:.25rem; }
-.ch-label { font-size:.9rem; color:var(--white); transition:color .2s; }
-.ch-arr { color:var(--mid); font-size:1.1rem; transition:transform .2s; }
-.avail-card {
-  border:1px solid var(--fog); padding:2.5rem;
-  margin-bottom:2rem; position:relative; overflow:hidden;
-}
-.avail-card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--lime); }
-.av-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-.av-title { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid); }
-.av-badge {
-  display:flex; align-items:center; gap:.5rem;
-  font-size:.6rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lime);
-  padding:.3rem .8rem;
-  background:rgba(200,255,0,.06); border:1px solid rgba(200,255,0,.2);
-}
-.av-status { font-family:var(--ff-serif); font-style:italic; font-size:1.3rem; color:var(--white); margin-bottom:1rem; }
-.av-desc { font-size:.78rem; color:var(--mid); line-height:1.8; }
-.sq-wrap { margin-top:2rem; }
-.sq-label { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin-bottom:1rem; }
-.sq-tags { display:flex; flex-wrap:wrap; gap:.5rem; }
-.sq-tag {
-  font-size:.65rem; padding:.35rem .9rem;
-  border:1px solid var(--fog); color:var(--mid); transition:all .2s;
-}
-.sq-tag:hover { border-color:var(--lime); color:var(--lime); }
-
-/* FOOTER */
-footer {
-  position:relative; z-index:2;
-  padding:2rem 4rem; border-top:1px solid var(--fog);
-  display:flex; justify-content:space-between; align-items:center;
-}
-.footer-brand { font-family:var(--ff-head); font-size:1.2rem; letter-spacing:.05em; color:var(--mid); }
-.footer-copy { font-size:.65rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mid); }
-
-/* BACK TO TOP */
-#btt {
-  position:fixed; bottom:2rem; right:2rem; z-index:200;
-  width:44px; height:44px; border:1px solid var(--fog);
-  background:var(--black);
-  display:flex; align-items:center; justify-content:center;
-  text-decoration:none; color:var(--mid); font-size:.9rem;
-  opacity:0; pointer-events:none;
-  transition:opacity .3s, border-color .2s, color .2s;
-}
-#btt.vis { opacity:1; pointer-events:all; }
-#btt:hover { border-color:var(--lime); color:var(--lime); }
-
-/* KEYFRAMES */
-@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-/* RESPONSIVE */
-@media (max-width:900px){
-  nav { padding:1.2rem 2rem; }
-  nav::after { left:2rem; right:2rem; }
-  .nav-links { display:none; }
-  #hero { padding:0 2rem; }
-  .hero-main { grid-template-columns:1fr; padding-top:8rem; }
-  .hero-right { order:-1; max-width:260px; }
-  .hero-bottom { flex-wrap:wrap; gap:1rem; }
-  section { padding:5rem 2rem; }
-  #about .about-grid, .contact-grid { grid-template-columns:1fr; gap:4rem; }
-  .skill-cats { grid-template-columns:1fr 1fr; }
-  .edu-grid, .cert-grid { grid-template-columns:1fr; }
-  .exp-entry { grid-template-columns:1fr; gap:1rem; }
-  footer { padding:1.5rem 2rem; flex-direction:column; gap:.5rem; text-align:center; }
-  .skills-inner { padding:0 2rem; }
-}
-</style>
-</head>
-<body>
-
-<div id="cursor-outer"></div>
-<div id="cursor-dot"></div>
-<canvas id="bg-canvas"></canvas>
-<div class="grain"></div>
-
-<div class="wrap">
-
-<!-- NAV -->
-<nav>
-  <a class="nav-logo" href="#hero">KR.</a>
-  <div class="nav-right">
-    <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#skills">Skills</a></li>
-      <li><a href="#experience">Work</a></li>
-      <li><a href="#education">Education</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-    <div class="nav-status">
-      <span class="status-dot"></span>Open to work
-    </div>
-  </div>
-</nav>
-
-<!-- HERO -->
-<section id="hero" style="border:none;padding-top:0;padding-bottom:0;">
-  <div class="hero-main">
-
-    <div class="hero-left">
-      <div class="hero-eyebrow">
-        <div class="eyebrow-line"></div>
-        <span class="eyebrow-text">Software Developer — Bloemfontein, ZA</span>
-      </div>
-      <h1 class="hero-name">
-        KARABO<br/>
-        <span class="stroke">Ramanamane</span>
-      </h1>
-      <div class="hero-role-line">
-        <span class="hero-role">Full-Stack Developer & Entrepreneur</span>
-        <div class="role-sep"></div>
-        <span class="hero-loc">BSc Computer Science — UJ 2025</span>
-      </div>
-    </div>
-
-    <div class="hero-right">
-      <div class="photo-container">
-        <!--
-        ╔══════════════════════════════════════╗
-        ║  ADD YOUR PHOTO:                     ║
-        ║  1. Save photo as "photo.jpg" in     ║
-        ║     the same folder as index.html    ║
-        ║  2. Replace the photo-inner div:     ║
-        ║  <div class="photo-inner">           ║
-        ║    <img src="./photo.jpg"            ║
-        ║         alt="Karabo Ramanamane"/>    ║
-        ║  </div>                              ║
-        ╚══════════════════════════════════════╝
-        -->
-        <div class="photo-frame-border"></div>
-        <div class="photo-inner">
-          <div class="photo-placeholder">
-            <div class="ph-icon">◈</div>
-            <div class="ph-label">Your photo here</div>
-            <div class="ph-code">
-              Save as photo.jpg<br/>
-              next to index.html<br/>
-              then update the src
-            </div>
-          </div>
-        </div>
-        <div class="photo-badge">Available for hire</div>
-      </div>
-      <p class="hero-bio">
-        Building <strong>thoughtful digital products</strong> with Python, Java and modern web stacks. Founder of a student mobility startup — I bring both engineering precision and <strong>real ownership</strong> to every project.
-      </p>
-    </div>
-
-  </div>
-
-  <div class="hero-bottom">
-    <div class="scroll-hint">
-      <div class="scroll-arrow">↓</div>
-      <span>Scroll to explore</span>
-    </div>
-    <div class="hero-cta">
-      <a href="#contact" class="btn-mag btn-primary">
-        <span class="btn-bg"></span>
-        <span class="btn-text">Get in touch →</span>
-      </a>
-      <a href="https://github.com/karabo221" target="_blank" class="btn-mag btn-ghost">
-        <span class="btn-bg"></span>
-        <span class="btn-text">GitHub ↗</span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="s-label reveal"><span class="s-num">01</span>About Me</div>
-  <div class="about-grid">
-    <div>
-      <p class="about-big reveal d1">"I write code that solves real problems — and I build teams that deliver them."</p>
-      <p class="about-para reveal d2">I'm a <strong>software developer</strong> with a BSc in Computer Science & Informatics from the University of Johannesburg. My foundation spans full-stack web development, systems programming, and database design.</p>
-      <p class="about-para reveal d2">What sets me apart is the combination of <strong>technical depth and entrepreneurial drive</strong>. As founder of Milestone Bicycle Club, I've managed operations, budgets, events, and people — skills that translate directly into building and shipping software products.</p>
-      <p class="about-para reveal d3">I'm proficient in <strong>Python, Java, C#, PHP</strong> and modern frameworks including React, Next.js, Django, Laravel and ASP.NET. I believe clean code, clear communication and ownership are the foundations of great engineering.</p>
-    </div>
-    <div>
-      <div class="facts-table reveal d1">
-        <div class="fact-row"><span class="fact-key">Location</span><span class="fact-val">Bloemfontein, Free State, ZA</span></div>
-        <div class="fact-row"><span class="fact-key">Email</span><span class="fact-val">karaboramana@gmail.com</span></div>
-        <div class="fact-row"><span class="fact-key">Phone</span><span class="fact-val">073 990 7153</span></div>
-        <div class="fact-row"><span class="fact-key">GitHub</span><span class="fact-val">github.com/karabo221</span></div>
-        <div class="fact-row"><span class="fact-key">Education</span><span class="fact-val">BSc CS & Informatics, UJ 2025</span></div>
-        <div class="fact-row"><span class="fact-key">Status</span><span class="fact-val green">Open to opportunities</span></div>
-        <div class="fact-row"><span class="fact-key">Interests</span><span class="fact-val">Cycling · Baking · Reading · Fitness</span></div>
-      </div>
-      <div class="langs-wrap reveal d2">
-        <div class="langs-label">Languages spoken</div>
-        <div class="langs-list">
-          <span class="lang-tag">English</span>
-          <span class="lang-tag">Sesotho</span>
-          <span class="lang-tag">Setswana</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SKILLS -->
-<section id="skills" style="padding:6rem 0;border-top:1px solid var(--fog);">
-  <div style="padding:0 4rem;">
-    <div class="s-label reveal"><span class="s-num">02</span>Technical Arsenal</div>
-  </div>
-  <div class="skills-marquee-wrap">
-    <div class="marquee-track" id="marqueeTrack">
-      <div class="marquee-pill"><span class="m-dot"></span>Python</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Java</div>
-      <div class="marquee-pill"><span class="m-dot"></span>React</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Next.js</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Django</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Laravel</div>
-      <div class="marquee-pill"><span class="m-dot"></span>ASP.NET</div>
-      <div class="marquee-pill"><span class="m-dot"></span>C#</div>
-      <div class="marquee-pill"><span class="m-dot"></span>PHP</div>
-      <div class="marquee-pill"><span class="m-dot"></span>SQL</div>
-      <div class="marquee-pill"><span class="m-dot"></span>C++</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Git &amp; GitHub</div>
-      <div class="marquee-pill"><span class="m-dot"></span>HTML / CSS</div>
-      <div class="marquee-pill"><span class="m-dot"></span>API Integration</div>
-      <div class="marquee-pill"><span class="m-dot"></span>AWS Cloud</div>
-      <div class="marquee-pill"><span class="m-dot"></span>App Design</div>
-      <!-- duplicate -->
-      <div class="marquee-pill"><span class="m-dot"></span>Python</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Java</div>
-      <div class="marquee-pill"><span class="m-dot"></span>React</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Next.js</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Django</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Laravel</div>
-      <div class="marquee-pill"><span class="m-dot"></span>ASP.NET</div>
-      <div class="marquee-pill"><span class="m-dot"></span>C#</div>
-      <div class="marquee-pill"><span class="m-dot"></span>PHP</div>
-      <div class="marquee-pill"><span class="m-dot"></span>SQL</div>
-      <div class="marquee-pill"><span class="m-dot"></span>C++</div>
-      <div class="marquee-pill"><span class="m-dot"></span>Git &amp; GitHub</div>
-      <div class="marquee-pill"><span class="m-dot"></span>HTML / CSS</div>
-      <div class="marquee-pill"><span class="m-dot"></span>API Integration</div>
-      <div class="marquee-pill"><span class="m-dot"></span>AWS Cloud</div>
-      <div class="marquee-pill"><span class="m-dot"></span>App Design</div>
-    </div>
-  </div>
-  <div class="skills-inner">
-    <div class="skill-cats">
-      <div class="skill-cat reveal">
-        <div class="sc-head">Languages</div>
-        <div class="sc-items">
-          <div class="sc-item">Python<div class="sc-bar"><div class="sc-fill" style="width:90%"></div></div></div>
-          <div class="sc-item">Java<div class="sc-bar"><div class="sc-fill" style="width:82%"></div></div></div>
-          <div class="sc-item">C#<div class="sc-bar"><div class="sc-fill" style="width:75%"></div></div></div>
-          <div class="sc-item">C++<div class="sc-bar"><div class="sc-fill" style="width:65%"></div></div></div>
-          <div class="sc-item">PHP<div class="sc-bar"><div class="sc-fill" style="width:78%"></div></div></div>
-          <div class="sc-item">SQL<div class="sc-bar"><div class="sc-fill" style="width:80%"></div></div></div>
-        </div>
-      </div>
-      <div class="skill-cat reveal d1">
-        <div class="sc-head">Frontend</div>
-        <div class="sc-items">
-          <div class="sc-item">React<div class="sc-bar"><div class="sc-fill" style="width:80%"></div></div></div>
-          <div class="sc-item">Next.js<div class="sc-bar"><div class="sc-fill" style="width:72%"></div></div></div>
-          <div class="sc-item">HTML<div class="sc-bar"><div class="sc-fill" style="width:90%"></div></div></div>
-          <div class="sc-item">CSS<div class="sc-bar"><div class="sc-fill" style="width:85%"></div></div></div>
-        </div>
-      </div>
-      <div class="skill-cat reveal d2">
-        <div class="sc-head">Backend</div>
-        <div class="sc-items">
-          <div class="sc-item">Django<div class="sc-bar"><div class="sc-fill" style="width:78%"></div></div></div>
-          <div class="sc-item">Laravel<div class="sc-bar"><div class="sc-fill" style="width:72%"></div></div></div>
-          <div class="sc-item">ASP.NET<div class="sc-bar"><div class="sc-fill" style="width:68%"></div></div></div>
-          <div class="sc-item">REST API<div class="sc-bar"><div class="sc-fill" style="width:82%"></div></div></div>
-        </div>
-      </div>
-      <div class="skill-cat reveal d3">
-        <div class="sc-head">Cloud & Tools</div>
-        <div class="sc-items">
-          <div class="sc-item">Git/GitHub<div class="sc-bar"><div class="sc-fill" style="width:85%"></div></div></div>
-          <div class="sc-item">AWS Cloud<div class="sc-bar"><div class="sc-fill" style="width:60%"></div></div></div>
-          <div class="sc-item">App Design<div class="sc-bar"><div class="sc-fill" style="width:70%"></div></div></div>
-          <div class="sc-item">API Testing<div class="sc-bar"><div class="sc-fill" style="width:75%"></div></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- EXPERIENCE -->
-<section id="experience">
-  <div class="s-label reveal"><span class="s-num">03</span>Experience</div>
-  <div class="exp-timeline">
-    <div class="exp-entry reveal">
-      <div>
-        <div class="exp-year">2025 — Present</div>
-        <div class="exp-org">Self-Founded</div>
-      </div>
-      <div>
-        <div class="exp-title">FOUNDER</div>
-        <p class="exp-desc">Milestone Bicycle Club — a student-led urban mobility startup built from scratch. Took full ownership from ideation through to operations, transforming a passion for cycling into a structured, running business.</p>
-        <ul class="exp-list">
-          <li>Manage operations, budgeting, partnerships, and fleet maintenance end-to-end</li>
-          <li>Coordinate weekly cycling events, overseeing all logistics and marketing</li>
-          <li>Build brand partnerships and negotiate vendor agreements</li>
-          <li>Own all technology decisions for the club's digital presence</li>
-        </ul>
-        <div class="exp-tags">
-          <span class="exp-tag">Operations</span>
-          <span class="exp-tag">Entrepreneurship</span>
-          <span class="exp-tag">Marketing</span>
-          <span class="exp-tag">Leadership</span>
-          <span class="exp-tag">Budgeting</span>
-        </div>
-      </div>
-    </div>
-    <div class="exp-entry reveal d1">
-      <div>
-        <div class="exp-year">2021</div>
-        <div class="exp-org">Kgatho Primary School</div>
-      </div>
-      <div>
-        <div class="exp-title">ASSISTANT TEACHER</div>
-        <p class="exp-desc">Supported active classroom instruction and contributed to learner development. Built structured communication, patience, and empathy — skills that carry directly into team collaboration and technical mentoring.</p>
-        <ul class="exp-list">
-          <li>Supported classroom instruction and individualised learner development</li>
-          <li>Developed structured communication and patience under pressure</li>
-        </ul>
-        <div class="exp-tags">
-          <span class="exp-tag">Teaching</span>
-          <span class="exp-tag">Communication</span>
-          <span class="exp-tag">Mentoring</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- EDUCATION -->
-<section id="education">
-  <div class="s-label reveal"><span class="s-num">04</span>Education</div>
-  <div class="edu-grid reveal d1">
-    <div class="edu-card">
-      <span class="edu-icon">🎓</span>
-      <div class="edu-deg">BSc Computer Science & Informatics</div>
-      <div class="edu-school">University of Johannesburg</div>
-      <span class="edu-badge">Class of 2025</span>
-    </div>
-    <div class="edu-card">
-      <span class="edu-icon">📋</span>
-      <div class="edu-deg">National Senior Certificate</div>
-      <div class="edu-school">Christian Brothers College</div>
-      <span class="edu-badge">Completed</span>
-    </div>
-  </div>
-</section>
-
-<!-- CERTIFICATIONS -->
-<section id="certifications">
-  <div class="s-label reveal"><span class="s-num">05</span>Certifications</div>
-  <div class="cert-grid">
-    <div class="cert-card reveal">
-      <div class="cert-num">01</div>
-      <div>
-        <div class="cert-issuer">Startup School</div>
-        <div class="cert-name">Startup Stream — Entrepreneurship Program</div>
-      </div>
-      <span class="cert-arrow">↗</span>
-    </div>
-    <div class="cert-card reveal d1">
-      <div class="cert-num">02</div>
-      <div>
-        <div class="cert-issuer">Amazon Web Services</div>
-        <div class="cert-name">AWS Cloud Practitioner Essentials</div>
-      </div>
-      <span class="cert-arrow">↗</span>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contact">
-  <div class="s-label reveal"><span class="s-num">06</span>Contact</div>
-  <div class="contact-grid">
-    <div>
-      <h2 class="contact-big reveal">
-        LET'S
-        <span class="stroke-line">Build Together.</span>
-      </h2>
-      <p class="contact-tagline reveal d1">I'm actively seeking software development opportunities — full-time roles, freelance projects, or collaborations. If you have something interesting, let's talk.</p>
-      <div class="contact-channels reveal d2">
-        <a href="mailto:karaboramana@gmail.com" class="ch-row">
-          <div><div class="ch-type">Email</div><div class="ch-label">karaboramana@gmail.com</div></div>
-          <span class="ch-arr">→</span>
-        </a>
-        <a href="tel:0739907153" class="ch-row">
-          <div><div class="ch-type">Phone</div><div class="ch-label">073 990 7153</div></div>
-          <span class="ch-arr">→</span>
-        </a>
-        <a href="https://github.com/karabo221" target="_blank" class="ch-row">
-          <div><div class="ch-type">GitHub</div><div class="ch-label">github.com/karabo221</div></div>
-          <span class="ch-arr">→</span>
-        </a>
-      </div>
-    </div>
-    <div style="padding-top:6rem;">
-      <div class="avail-card reveal d1">
-        <div class="av-top">
-          <span class="av-title">Current Status</span>
-          <span class="av-badge"><span class="status-dot"></span>Active</span>
-        </div>
-        <div class="av-status">Available for new opportunities</div>
-        <p class="av-desc">Based in Bloemfontein. Open to remote work or relocation for the right role. Comfortable in agile teams and independently.</p>
-      </div>
-      <div class="sq-wrap reveal d2">
-        <div class="sq-label">Quick skills reference</div>
-        <div class="sq-tags">
-          <span class="sq-tag">Python</span><span class="sq-tag">Java</span>
-          <span class="sq-tag">React</span><span class="sq-tag">Next.js</span>
-          <span class="sq-tag">Django</span><span class="sq-tag">Laravel</span>
-          <span class="sq-tag">C#</span><span class="sq-tag">PHP</span>
-          <span class="sq-tag">SQL</span><span class="sq-tag">ASP.NET</span>
-          <span class="sq-tag">AWS</span><span class="sq-tag">Git</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <span class="footer-brand">KR — 2025</span>
-  <span class="footer-copy">Bloemfontein · South Africa · karaboramana@gmail.com</span>
-</footer>
-
-</div><!-- /wrap -->
-
-<a href="#hero" id="btt" title="Back to top">↑</a>
-
-<script>
-/* CANVAS PARTICLES */
-(function(){
-  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
-  let W,H,pts=[];
-  const N=70;
-  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
-  function init(){
-    resize();
-    pts=Array.from({length:N},()=>({
-      x:Math.random()*W,y:Math.random()*H,
-      vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,
-      r:Math.random()*1.2+.4
-    }));
-  }
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    for(let i=0;i<pts.length;i++){
-      for(let j=i+1;j<pts.length;j++){
-        const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
-        if(d<130){
-          ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
-          ctx.strokeStyle=`rgba(200,255,0,${(1-d/130)*.1})`;ctx.lineWidth=.4;ctx.stroke();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karabo Ramanamane | Software Developer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#7c3aed', // The purple accent color
+                        dark: '#111827',
+                        grayLight: '#f3f4f6',
+                        grayText: '#6b7280'
+                    }
+                }
+            }
         }
-      }
-    }
-    pts.forEach(p=>{
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(200,255,0,.3)';ctx.fill();
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0||p.x>W)p.vx*=-1;
-      if(p.y<0||p.y>H)p.vy*=-1;
-    });
-    requestAnimationFrame(draw);
-  }
-  window.addEventListener('resize',resize);
-  init();draw();
-})();
+    </script>
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #111827;
+        }
+        .nav-link {
+            position: relative;
+            color: #6b7280;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #7c3aed;
+        }
+        .dashed-border {
+            border: 1px dashed #e5e7eb;
+        }
+        /* Experience Tabs */
+        .tab-btn {
+            border-left: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-left-color: #7c3aed;
+            color: #7c3aed;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary selection:text-white">
 
-/* CUSTOM CURSOR */
-(function(){
-  const outer=document.getElementById('cursor-outer'),dot=document.getElementById('cursor-dot');
-  let mx=0,my=0,ox=0,oy=0;
-  document.addEventListener('mousemove',e=>{
-    mx=e.clientX;my=e.clientY;
-    dot.style.left=mx+'px';dot.style.top=my+'px';
-  });
-  (function anim(){ox+=(mx-ox)*.1;oy+=(my-oy)*.1;outer.style.left=ox+'px';outer.style.top=oy+'px';requestAnimationFrame(anim);})();
-  document.querySelectorAll('a,button,.btn-mag,.cert-card,.edu-card,.skill-cat').forEach(el=>{
-    el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
-    el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
-  });
-})();
+    <nav class="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
+        <a href="#" class="text-xl font-extrabold tracking-tight">Karabo<span class="text-primary">.</span></a>
+        
+        <div class="hidden md:flex gap-8">
+            <a href="#home" class="nav-link active">Home</a>
+            <a href="#projects" class="nav-link">Projects</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#experience" class="nav-link">Experience</a>
+        </div>
 
-/* SCROLL REVEAL */
-(function(){
-  const obs=new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        e.target.classList.add('visible');
-        e.target.querySelectorAll('.skill-cat').forEach(c=>c.classList.add('visible'));
-        if(e.target.classList.contains('skill-cat'))e.target.classList.add('visible');
-      }
-    });
-  },{threshold:.12});
-  document.querySelectorAll('.reveal,.skill-cat').forEach(el=>obs.observe(el));
-})();
+        <div>
+            <a href="https://github.com/karabo221" target="_blank" class="w-10 h-10 rounded-full bg-dark text-white flex items-center justify-center hover:bg-primary transition shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>
+        </div>
+    </nav>
 
-/* BACK TO TOP */
-(function(){
-  const b=document.getElementById('btt');
-  window.addEventListener('scroll',()=>b.classList.toggle('vis',window.scrollY>600));
-})();
+    <section id="home" class="max-w-6xl mx-auto px-6 pt-20 pb-24 grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <p class="text-xl font-medium text-grayText mb-2">Hey, I'm Karabo 👋</p>
+            <h1 class="text-6xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6">
+                <span class="text-primary">Software</span><br>
+                Developer
+            </h1>
+            <p class="text-lg text-grayText mb-8 max-w-md leading-relaxed">
+                I'm a full-stack developer and entrepreneur based in South Africa. I build thoughtful digital products with Python, Java, and modern web stacks.
+            </p>
+            <div class="flex gap-4">
+                <a href="mailto:karaboramana@gmail.com" class="bg-dark text-white px-6 py-3 rounded-lg font-medium hover:bg-primary transition shadow-lg">Get In Touch</a>
+                <a href="#projects" class="bg-grayLight text-dark px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition">Browse Projects</a>
+            </div>
+        </div>
+        <div class="flex justify-center md:justify-end relative">
+            <div class="w-72 h-72 md:w-96 md:h-96 rounded-full p-2 dashed-border relative">
+                <div class="w-full h-full rounded-full overflow-hidden bg-grayLight border border-gray-200">
+                    <img src="./photo.jpg" alt="Karabo Ramanamane" class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition duration-500">
+                </div>
+            </div>
+        </div>
+    </section>
 
-/* MAGNETIC BUTTONS */
-(function(){
-  document.querySelectorAll('.btn-mag').forEach(btn=>{
-    btn.addEventListener('mousemove',e=>{
-      const r=btn.getBoundingClientRect();
-      const x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
-      btn.style.transform=`translate(${x*.2}px,${y*.2}px)`;
-    });
-    btn.addEventListener('mouseleave',()=>{btn.style.transform='translate(0,0)';});
-  });
-})();
+    <section id="projects" class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-100">
+        <h2 class="text-5xl font-extrabold mb-12">Projects<span class="text-primary">.</span></h2>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+            
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">YouTube Automation Bot</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        An automated scheduling and publishing script that interacts with the YouTube Data API to post videos weekly. Streamlines content management and maintains a consistent upload schedule without manual intervention.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Python</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">YouTube API</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Automation</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
 
-/* NAV ACTIVE HIGHLIGHT */
-(function(){
-  const secs=document.querySelectorAll('section[id]'),links=document.querySelectorAll('.nav-links a');
-  const obs=new IntersectionObserver(e=>{
-    e.forEach(entry=>{
-      if(entry.isIntersecting){
-        links.forEach(l=>l.style.color='');
-        const a=document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
-        if(a)a.style.color='var(--white)';
-      }
-    });
-  },{threshold:.4});
-  secs.forEach(s=>obs.observe(s));
-})();
-</script>
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">Property24 Web Scraper</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        A data extraction tool built to scrape real estate listings from Property24. It tracks house prices over time and calculates price differences, allowing for efficient market trend analysis and deal sourcing.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Python</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Web Scraping</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Data Analysis</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">Bitcoin Trading Bot</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        An algorithmic cryptocurrency trading bot that interfaces with exchange APIs. It continuously monitors Bitcoin price action and executes buy/sell orders based on predefined technical indicators and strategies.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Python</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Crypto APIs</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Algorithmic Trading</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">Student Hub</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        A comprehensive web application designed to centralize student resources and activities. Developed with a modern component-based frontend and a robust backend API. Containerized for seamless deployment.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">React</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">PHP</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Docker</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Supabase</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">ESP32 IoT Integrations</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        A collection of hardware-software integration projects utilizing ESP32 microcontrollers. Features include Wi-Fi controlled LED systems and motion sensor data tracking via Arduino IDE.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">C++</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">ESP32</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">IoT</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Arduino IDE</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+            <div class="bg-grayLight rounded-3xl p-8 hover:shadow-xl transition duration-300 border border-transparent hover:border-gray-200 flex flex-col h-full">
+                <div class="flex-grow">
+                    <h3 class="text-2xl font-bold mb-3 text-dark">Algorithms & Data Structures</h3>
+                    <p class="text-grayText mb-6 leading-relaxed">
+                        A repository of highly optimized solutions to complex LeetCode problems. Focuses on time/space complexity optimization spanning arrays, linked lists, binary trees, and dynamic programming.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Python</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Java</span>
+                        <span class="text-xs font-bold bg-white text-dark px-3 py-1.5 rounded-full border border-gray-200">Problem Solving</span>
+                    </div>
+                </div>
+                <a href="https://github.com/karabo221" target="_blank" class="inline-flex items-center gap-2 text-primary font-bold hover:text-dark transition">
+                    View Code
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="about" class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-100">
+        <h2 class="text-5xl font-extrabold mb-8">About me<span class="text-primary">.</span></h2>
+        
+        <div class="grid md:grid-cols-2 gap-16 mb-16">
+            <div class="border-l-4 border-primary pl-6 py-2">
+                <p class="text-xl text-grayText leading-relaxed">
+                    Developing beautiful and functional software is what I love doing, and that's why I give my all in every new challenge. With a foundation spanning full-stack web development and systems programming, I bring both engineering precision and real ownership to every project.
+                </p>
+            </div>
+            <div>
+                 <div class="w-full h-48 bg-grayLight rounded-2xl overflow-hidden flex items-center justify-center p-6 text-center">
+                     <p class="text-grayText font-medium">BSc Computer Science & Informatics<br>University of Johannesburg (2025)</p>
+                 </div>
+            </div>
+        </div>
+
+        <h3 class="text-2xl font-bold mb-6">My Stack<span class="text-primary">.</span></h3>
+        <div class="bg-grayLight rounded-3xl p-8 flex flex-wrap gap-4 items-center">
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">Python</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">Java</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">React & Next.js</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">PHP & Laravel</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">C# & ASP.NET</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">AWS Cloud</span>
+            <svg class="text-primary w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            <span class="bg-dark text-white px-4 py-2 rounded-full text-sm font-medium">SQL</span>
+        </div>
+    </section>
+
+    <section id="experience" class="max-w-6xl mx-auto px-6 py-20 pb-32 border-t border-gray-100">
+        <h2 class="text-5xl font-extrabold mb-12">Experience<span class="text-primary">.</span></h2>
+        
+        <div class="grid md:grid-cols-[250px_1fr] gap-12">
+            <div class="flex flex-col">
+                <button class="tab-btn active text-left px-6 py-4 font-bold text-lg focus:outline-none" onclick="openTab('tab1', this)">
+                    Milestone Bicycle Club
+                </button>
+                <button class="tab-btn text-left px-6 py-4 font-bold text-lg text-grayText hover:bg-gray-50 focus:outline-none" onclick="openTab('tab2', this)">
+                    Kgatho Primary
+                </button>
+            </div>
+
+            <div class="min-h-[300px]">
+                
+                <div id="tab1" class="tab-content active">
+                    <h3 class="text-2xl font-bold mb-1">Founder <span class="text-primary">@ Milestone Bicycle Club</span></h3>
+                    <p class="text-sm text-grayText mb-8">2025 - Present</p>
+                    
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <svg class="text-primary w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-gray-700">Manage operations, budgeting, partnerships, and fleet maintenance end-to-end.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="text-primary w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-gray-700">Coordinate weekly cycling events, overseeing all logistics and marketing.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="text-primary w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-gray-700">Own all technology decisions for the club's digital presence and management systems.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="tab2" class="tab-content">
+                    <h3 class="text-2xl font-bold mb-1">Assistant Teacher <span class="text-primary">@ Kgatho Primary School</span></h3>
+                    <p class="text-sm text-grayText mb-8">2021</p>
+                    
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <svg class="text-primary w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-gray-700">Supported active classroom instruction and contributed to learner development.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="text-primary w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-gray-700">Built structured communication, patience, and empathy—skills that carry directly into team collaboration and technical mentoring.</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-gray-100 mt-12 py-8 text-center text-sm text-grayText">
+        <p>Karabo Ramanamane &copy; 2026. Built and deployed via Vercel.</p>
+    </footer>
+
+    <script>
+        function openTab(tabId, element) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Remove active state from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-primary');
+                btn.classList.add('text-grayText');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active state to clicked button
+            element.classList.add('active', 'text-primary');
+            element.classList.remove('text-grayText');
+        }
+    </script>
 </body>
 </html>
